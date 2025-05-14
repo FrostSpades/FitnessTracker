@@ -4,9 +4,52 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FitnessTracker"
+        xmlns:viewModels="clr-namespace:FitnessTracker.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="Fitness Tracker" Height="450" Width="800">
+    
+    <Window.DataContext>
+        <viewModels:MainViewModel />
+    </Window.DataContext>
 
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="0 0 0 20" HorizontalAlignment="Left">
+            <TextBlock Text="Distance Run:" FontSize="16" Margin="0 0 10 0"/>
+            <TextBlock Text="{Binding Fitness.DisplayedDistance}" FontSize="16" />
+            <TextBlock Text="{Binding Fitness.SelectedDistanceUnit}" FontSize="16" Margin="5 0 0 0"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0 0 0 20" HorizontalAlignment="Left">
+            <TextBlock Text="Water Drunk:" FontSize="16" Margin="0 0 10 0"/>
+            <TextBlock Text="{Binding Fitness.DisplayedWaterIntake}" FontSize="16"/>
+            <TextBlock Text="{Binding Fitness.SelectedWaterUnit}" FontSize="16" Margin="5 0 0 0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Button Content="Add Distance" Width="150" Height="40" Margin="0 0 0 10"
+                    Command="{Binding Fitness.AddRunDistanceCommand}" />
+
+            <Button Content="Add Water" Width="150" Height="40" Margin="0 0 0 10"
+                    Command="{Binding Fitness.AddWaterCommand}" />
+
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                <TextBlock Text="Distance Unit:" VerticalAlignment="Center" Margin="0 0 5 0"/>
+                <ComboBox Width="120" SelectedItem="{Binding Fitness.SelectedDistanceUnit}"
+                          ItemsSource="{Binding Fitness.DistanceUnits}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                <TextBlock Text="Water Unit:" VerticalAlignment="Center" Margin="0 0 5 0"/>
+                <ComboBox Width="120" SelectedItem="{Binding Fitness.SelectedWaterUnit}"
+                          ItemsSource="{Binding Fitness.WaterUnits}" />
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>
+
