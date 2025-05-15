@@ -1,19 +1,64 @@
-﻿using System.Windows.Input;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using FitnessTracker.Models;
 
 namespace FitnessTracker.ViewModels;
 
-public class FitnessViewModel
+/// <summary>
+/// ViewModel for the fitness related information
+/// </summary>
+public class FitnessViewModel : INotifyPropertyChanged
 {
     private FitnessData _data = new FitnessData();
-    
+    public event PropertyChangedEventHandler? PropertyChanged;
     public ICommand AddRunDistanceCommand { get;}
+    public ICommand AddWaterCommand { get;}
+    
+    public ObservableCollection<DistanceUnit> DistanceUnits { get; }
+        = new ObservableCollection<DistanceUnit>((DistanceUnit[])Enum.GetValues(typeof(DistanceUnit)));
 
-    public FitnessViewModel()
+    public ObservableCollection<WaterUnit> WaterUnits { get; }
+        = new ObservableCollection<WaterUnit>((WaterUnit[])Enum.GetValues(typeof(WaterUnit)));
+    
+    /// <summary>
+    /// The current run distance selected
+    /// </summary>
+    public DistanceUnit SelectedDistanceUnit
     {
-        AddRunDistanceCommand = new RelayCommand(AddRunDistance);
+        get => _data.Distance.Unit;
+        set
+        {
+            if (_data.Distance.Unit != value)
+            {
+                _data.Distance.Unit = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(DisplayedDistance));
+            }
+                
+        }
     }
     
+    /// <summary>
+    /// The distance displayed
+    /// </summary>
+    public double DisplayedDistance
+    {
+        get
+        {
+            return SelectedDistanceUnit switch
+            {
+                DistanceUnit.Miles => _data.Distance.Value,
+                DistanceUnit.Kilometers => _data.Distance.Value * 1.60934,
+                _ => _data.Distance.Value
+            };
+        }
+    }
+    
+    /// <summary>
+    /// The total water intake.
+    /// </summary>
     public double WaterIntake
     {
         get
@@ -27,9 +72,38 @@ public class FitnessViewModel
             };
         }
     }
-
+    
+    /// <summary>
+    /// Default Constructor
+    /// </summary>
+    public FitnessViewModel()
+    {
+        AddRunDistanceCommand = new RelayCommand(AddRunDistance);
+        AddWaterCommand = new RelayCommand(AddWater);
+    }
+    
+    
     private void AddRunDistance()
     {
-        Console.WriteLine("Adding Run Distance");
+        _data.Distance.Value += 1;
+        OnPropertyChanged(nameof(DisplayedDistance));
+    }
+
+    private void AddWater()
+    {
+        Console.WriteLine("Adding Water");
+    }
+    
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }

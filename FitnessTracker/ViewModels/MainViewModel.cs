@@ -12,9 +12,7 @@ public class MainViewModel : INotifyPropertyChanged
     public FitnessViewModel Fitness { get;} = new FitnessViewModel();
     
     public MainViewModel()
-    {
-        
-    }
+    {}
     
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

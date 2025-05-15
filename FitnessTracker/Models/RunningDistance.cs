@@ -8,6 +8,9 @@ public enum DistanceUnit
     Feet
 }
 
+/// <summary>
+/// Model containing distance information
+/// </summary>
 public class RunningDistance
 {
     public DistanceUnit Unit { get; set; }

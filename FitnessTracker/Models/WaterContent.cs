@@ -7,6 +7,9 @@ public enum WaterUnit
     Liters
 }
 
+/// <summary>
+/// Model containing water information
+/// </summary>
 public class WaterContent 
 {
     public WaterUnit Unit { get; set; }
