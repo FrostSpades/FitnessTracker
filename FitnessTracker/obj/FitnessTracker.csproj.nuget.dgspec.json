@@ -59,6 +59,10 @@
             "MaterialDesignThemes.Wpf": {
               "target": "Package",
               "version": "[1.0.1, )"
+            },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.6, )"
             }
           },
           "imports": [

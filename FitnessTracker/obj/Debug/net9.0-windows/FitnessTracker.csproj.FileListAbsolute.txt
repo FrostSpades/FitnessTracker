@@ -67,3 +67,6 @@ D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\refint\
 D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\FitnessTracker.pdb
 D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\FitnessTracker.genruntimeconfig.cache
 D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\ref\FitnessTracker.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\FitnessTracker.sourcelink.json
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.DependencyInjection.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll

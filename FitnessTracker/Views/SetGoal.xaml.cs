@@ -1,5 +1,4 @@
-﻿// FitnessTracker/Views/SetGoal.xaml.cs
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using FitnessTracker.ViewModels;
 using FitnessTracker.Models;

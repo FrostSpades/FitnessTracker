@@ -1,5 +1,4 @@
-﻿// FitnessTracker/ViewModels/SetGoalViewModel.cs
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using FitnessTracker.Models;
 

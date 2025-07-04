@@ -1,6 +1,6 @@
 ﻿namespace FitnessTracker.Models;
 
-public class Goals
+public class Goal
 {
     
 }

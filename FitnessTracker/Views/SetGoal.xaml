@@ -71,9 +71,6 @@
                          Height="30"
                          VerticalContentAlignment="Center"/>
             </StackPanel>
-
-
-            
         </StackPanel>
 
 
