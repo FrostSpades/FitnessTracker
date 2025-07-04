@@ -7,42 +7,42 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FitnessTracker
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
+    /// <summary>Application bootstrapper wired for Dependency Injection.</summary>
     public partial class App : Application
     {
-        public static IServiceProvider ServiceProvider { get; private set; }
+        public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
-        protected override void OnStartup(StartupEventArgs e)
+        // make it async and await the load
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // Configure DI
             var services = new ServiceCollection();
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
 
-            // Launch your starting window
-            var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+            var goalService = ServiceProvider.GetRequiredService<IGoalService>();
+            await goalService.LoadGoalsAsync();     // ← no deadlock
+
+            ServiceProvider.GetRequiredService<MainWindow>()
+                .Show();
         }
 
-        private void ConfigureServices(IServiceCollection services)
+        private static void ConfigureServices(IServiceCollection services)
         {
-            // Register services
-            services.AddSingleton<GoalService>();
+            // Services
+            services.AddSingleton<IGoalService, GoalService>();
 
-            // Register viewmodels
+            // View-models
             services.AddTransient<SetGoalViewModel>();
+            services.AddTransient<HomeViewModel>();
             services.AddTransient<FitnessViewModel>();
             services.AddTransient<MainViewModel>();
-            services.AddTransient<HomeViewModel>();
 
-            // Register views
-            services.AddTransient<MainWindow>();
+            // Views
             services.AddTransient<SetGoal>();
             services.AddTransient<Home>();
+            services.AddSingleton<MainWindow>(); 
         }
     }
 }

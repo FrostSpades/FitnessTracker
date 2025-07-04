@@ -1,123 +1,164 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using FitnessTracker.Models;
+using FitnessTracker.Services;
 
-namespace FitnessTracker.ViewModels;
-
-public class SetGoalViewModel : INotifyPropertyChanged
+namespace FitnessTracker.ViewModels
 {
-    private string _selectedGoalType = "Running";
-    private float _goalValue;
-    private DistanceUnit _selectedDistanceUnit = DistanceUnit.Miles;
-    private WaterUnit _selectedWaterUnit = WaterUnit.Ounces;
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public string[] GoalTypes { get; } = { "Running", "Water" };
-    public DistanceUnit[] DistanceUnits { get; } = Enum.GetValues<DistanceUnit>();
-    public WaterUnit[] WaterUnits { get; } = Enum.GetValues<WaterUnit>();
-
-    public string SelectedGoalType
+    /// <summary>
+    /// View-model for the Set-Goal dialog.
+    /// Contains all validation and persistence logic, injected with <see cref="IGoalService"/>.
+    /// </summary>
+    public class SetGoalViewModel : INotifyPropertyChanged
     {
-        get => _selectedGoalType;
-        set => SetField(ref _selectedGoalType, value);
-    }
+        private readonly IGoalService _goalService;
 
-    public float GoalValue
-    {
-        get => _goalValue;
-        set => SetField(ref _goalValue, value);
-    }
-
-    public DistanceUnit SelectedDistanceUnit
-    {
-        get => _selectedDistanceUnit;
-        set
+        public SetGoalViewModel(IGoalService goalService)
         {
-            if (_selectedDistanceUnit != value)
+            _goalService = goalService;
+        }
+
+        private string _selectedGoalType = "Running";
+        private float  _goalValue;
+        private DistanceUnit _selectedDistanceUnit = DistanceUnit.Miles;
+        private WaterUnit    _selectedWaterUnit    = WaterUnit.Ounces;
+        private Goal? _lastSavedGoal;
+
+        public string[]       GoalTypes     { get; } = { "Running", "Water" };
+        public DistanceUnit[] DistanceUnits { get; } = Enum.GetValues<DistanceUnit>();
+        public WaterUnit[]    WaterUnits    { get; } = Enum.GetValues<WaterUnit>();
+
+        public string SelectedGoalType
+        {
+            get => _selectedGoalType;
+            set => SetField(ref _selectedGoalType, value);
+        }
+
+        public float GoalValue
+        {
+            get => _goalValue;
+            set => SetField(ref _goalValue, value);
+        }
+
+        public DistanceUnit SelectedDistanceUnit
+        {
+            get => _selectedDistanceUnit;
+            set
             {
-                var previousUnit = _selectedDistanceUnit;
-                _selectedDistanceUnit = value;
-
-                // Convert value if goal is running
-                if (IsRunningGoal && GoalValue > 0)
+                if (_selectedDistanceUnit != value)
                 {
-                    var temp = new RunningDistance
-                    {
-                        Unit = previousUnit,
-                        Value = GoalValue
-                    };
-                    GoalValue = temp.ConvertTo(value);
-                }
+                    var previous = _selectedDistanceUnit;
+                    _selectedDistanceUnit = value;
 
-                OnPropertyChanged();
+                    if (IsRunningGoal && GoalValue > 0)
+                    {
+                        GoalValue = new RunningDistance
+                        {
+                            Unit  = previous,
+                            Value = GoalValue
+                        }.ConvertTo(value);
+                    }
+
+                    OnPropertyChanged();
+                }
             }
         }
-    }
 
-    public WaterUnit SelectedWaterUnit
-    {
-        get => _selectedWaterUnit;
-        set
+        public WaterUnit SelectedWaterUnit
         {
-            if (_selectedWaterUnit != value)
+            get => _selectedWaterUnit;
+            set
             {
-                var previousUnit = _selectedWaterUnit;
-                _selectedWaterUnit = value;
-
-                // Convert value if goal is water
-                if (IsWaterGoal && GoalValue > 0)
+                if (_selectedWaterUnit != value)
                 {
-                    var temp = new WaterContent
-                    {
-                        Unit = previousUnit,
-                        Value = GoalValue
-                    };
-                    GoalValue = temp.ConvertTo(value);
-                }
+                    var previous = _selectedWaterUnit;
+                    _selectedWaterUnit = value;
 
-                OnPropertyChanged();
+                    if (IsWaterGoal && GoalValue > 0)
+                    {
+                        GoalValue = new WaterContent
+                        {
+                            Unit  = previous,
+                            Value = GoalValue
+                        }.ConvertTo(value);
+                    }
+
+                    OnPropertyChanged();
+                }
             }
         }
-    }
 
-    public bool IsRunningGoal => SelectedGoalType == "Running";
-    public bool IsWaterGoal => SelectedGoalType == "Water";
+        public bool IsRunningGoal => SelectedGoalType == "Running";
+        public bool IsWaterGoal   => SelectedGoalType == "Water";
 
-    public RunningDistance GetRunningGoal()
-    {
-        return new RunningDistance
+        /// <summary>The goal that was just saved (null until first save).</summary>
+        public Goal? LastSavedGoal
         {
-            Unit = SelectedDistanceUnit,
-            Value = GoalValue
-        };
-    }
-
-    public WaterContent GetWaterGoal()
-    {
-        return new WaterContent
-        {
-            Unit = SelectedWaterUnit,
-            Value = GoalValue
-        };
-    }
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
-        if (propertyName == nameof(SelectedGoalType))
-        {
-            OnPropertyChanged(nameof(IsRunningGoal));
-            OnPropertyChanged(nameof(IsWaterGoal));
+            get => _lastSavedGoal;
+            private set => SetField(ref _lastSavedGoal, value);
         }
-    }
 
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
+        /// <summary>
+        /// Validates input and saves the goal.  
+        /// Returns <c>true</c> on success; < c>false</c> means validation failed.
+        /// </summary>
+        public async Task<bool> SaveAsync()
+        {
+            if (GoalValue <= 0)
+                return false;
+
+            Goal saved;
+            if (IsRunningGoal)
+            {
+                saved = await _goalService.SaveGoalAsync(
+                            Goal.FromRunningDistance(GetRunningGoal()));
+            }
+            else if (IsWaterGoal)
+            {
+                saved = await _goalService.SaveGoalAsync(
+                            Goal.FromWaterContent(GetWaterGoal()));
+            }
+            else
+            {
+                return false;
+            }
+
+            LastSavedGoal = saved;
+            return true;
+        }
+
+        public RunningDistance GetRunningGoal() => new()
+        {
+            Unit  = SelectedDistanceUnit,
+            Value = GoalValue
+        };
+
+        public WaterContent GetWaterGoal() => new()
+        {
+            Unit  = SelectedWaterUnit,
+            Value = GoalValue
+        };
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+            if (name == nameof(SelectedGoalType))
+            {
+                OnPropertyChanged(nameof(IsRunningGoal));
+                OnPropertyChanged(nameof(IsWaterGoal));
+            }
+        }
+
+        protected bool SetField<T>(ref T field, T value,
+                                   [CallerMemberName] string? name = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(name);
+            return true;
+        }
     }
 }

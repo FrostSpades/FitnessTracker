@@ -3,50 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FitnessTracker"
-        xmlns:viewModels="clr-namespace:FitnessTracker.ViewModels"
-        xmlns:packIcon="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="Fitness Tracker" Height="450" Width="800">
-    
-    <Window.DataContext>
-        <viewModels:MainViewModel />
-    </Window.DataContext>
+        Title="Fitness Tracker"
+        Height="450" Width="800">
 
     <DockPanel>
-        <ContentControl Content="{Binding CurrentViewModel}" DockPanel.Dock="Top" />
+        <ContentControl Content="{Binding CurrentViewModel}"
+                        DockPanel.Dock="Top" />
+
+        <!-- bottom navigation bar (buttons currently commented out) -->
         <StackPanel Orientation="Horizontal"
                     DockPanel.Dock="Bottom"
                     Background="#263238"
                     Height="70"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    Margin="0"
-                    >
-
-            <!-- Home Button -->
-            <!-- <Button Style="{StaticResource MaterialDesignRaisedButton}" -->
-            <!--         Command="{Binding ShowHome}" -->
-            <!--         Foreground="White" -->
-            <!--         Margin="8"> -->
-            <!--     <StackPanel Orientation="Vertical" HorizontalAlignment="Center"> -->
-            <!--         <packIcon:PackIcon Kind="Home" Width="28" Height="28" /> -->
-            <!--         <TextBlock Text="Home" FontSize="10" HorizontalAlignment="Center" /> -->
-            <!--     </StackPanel> -->
-            <!-- </Button> -->
-            <!-- -->
-            <!-- ~1~ Set Goal Button @1@ -->
-            <!-- <Button Style="{StaticResource MaterialDesignRaisedButton}" -->
-            <!--         Command="{Binding ShowSetGoal}" -->
-            <!--         Foreground="White" -->
-            <!--         Margin="8"> -->
-            <!--     <StackPanel Orientation="Vertical" HorizontalAlignment="Center"> -->
-            <!--         <packIcon:PackIcon Kind="FlagCheckered" Width="28" Height="28" /> -->
-            <!--         <TextBlock Text="Set Goal" FontSize="10" HorizontalAlignment="Center" /> -->
-            <!--     </StackPanel> -->
-            <!-- </Button> -->
-
-        </StackPanel>
+                    VerticalAlignment="Bottom" />
     </DockPanel>
 </Window>
-

@@ -1,55 +1,43 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using FitnessTracker.ViewModels;
-using FitnessTracker.Models;
 
-namespace FitnessTracker.Views;
-
-public partial class SetGoal : UserControl
+namespace FitnessTracker.Views
 {
-    private SetGoalViewModel ViewModel => (SetGoalViewModel)DataContext;
-
-    public SetGoal()
+    /// <summary>Code-behind is **UI-only**: shows dialogs and closes the window.</summary>
+    public partial class SetGoal : UserControl
     {
-        InitializeComponent();
-        DataContext = new SetGoalViewModel();
-    }
+        private SetGoalViewModel ViewModel => (SetGoalViewModel)DataContext;
 
-    private void OkButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.GoalValue <= 0)
+        // ViewModel is supplied by DI; no “new” here.
+        public SetGoal(SetGoalViewModel viewModel)
         {
-            MessageBox.Show("Please enter a valid goal value.", "Invalid Input", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            InitializeComponent();
+            DataContext = viewModel;
         }
 
-        if (ViewModel.IsRunningGoal)
+        private async void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            var runningGoal = ViewModel.GetRunningGoal();
-            // TODO: Save running goal to your data store
-            MessageBox.Show($"Running goal set: {runningGoal.Value} {runningGoal.Unit}",
-                "Goal Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (!await ViewModel.SaveAsync())
+            {
+                MessageBox.Show("Please enter a valid goal value.",
+                    "Invalid Input",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var g = ViewModel.LastSavedGoal!;
+            MessageBox.Show($"{g.Type} goal set: {g.Value} {g.Unit}",
+                "Goal Saved",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            CloseDialog();
         }
-        else if (ViewModel.IsWaterGoal)
-        {
-            var waterGoal = ViewModel.GetWaterGoal();
-            // TODO: Save water goal to your data store
-            MessageBox.Show($"Water goal set: {waterGoal.Value} {waterGoal.Unit}",
-                "Goal Saved", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
-        CloseDialog();
-    }
+        private void CancelButton_Click(object sender, RoutedEventArgs e) => CloseDialog();
 
-    private void CancelButton_Click(object sender, RoutedEventArgs e)
-    {
-        CloseDialog();
-    }
-
-    private void CloseDialog()
-    {
-        var window = Window.GetWindow(this);
-        window?.Close();
+        private void CloseDialog() => Window.GetWindow(this)?.Close();
     }
 }

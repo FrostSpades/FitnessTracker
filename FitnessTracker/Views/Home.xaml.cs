@@ -1,6 +1,7 @@
 ﻿// FitnessTracker/Views/Home.xaml.cs
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FitnessTracker.Views;
 
@@ -16,7 +17,7 @@ public partial class Home : UserControl
         var setGoalWindow = new Window
         {
             Title = "Set Goal",
-            Content = new SetGoal(),
+            Content = App.ServiceProvider.GetRequiredService<SetGoal>(),
             Width = 325,
             Height = 400,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
