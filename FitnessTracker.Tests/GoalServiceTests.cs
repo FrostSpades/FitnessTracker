@@ -3,143 +3,111 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FitnessTracker.Models;
+using FitnessTracker.Repositories;
 using FitnessTracker.Services;
 using Xunit;
 
-// -----------------------------------------------------------------------------
-// All tests in this assembly run sequentially (shared goals.json path).
-// -----------------------------------------------------------------------------
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-public class GoalServiceTests : IDisposable
+namespace FitnessTracker.Tests
 {
-    // Path that GoalService uses internally
-    private static readonly string SavePath =
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                     "FitnessTracker", "SaveData", "goals.json");
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // CLEANUP: delete the file before *and* after each test
-    // ──────────────────────────────────────────────────────────────────────────
-    public GoalServiceTests()  => DeleteSaveFile();
-    public void Dispose()      => DeleteSaveFile();
-
-    private static void DeleteSaveFile()
+    public sealed class GoalServiceTests : IDisposable
     {
-        if (File.Exists(SavePath))
-            File.Delete(SavePath);
-    }
+        private static readonly string SaveDir  = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SaveData");
+        private static readonly string SavePath = Path.Combine(SaveDir, "goals.json");
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // TEST #1 – File location
-    // ──────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task SaveGoalAsync_ShouldCreateFile_InFitnessTrackerSaveDataFolder()
-    {
-        // arrange
-        var service = new GoalService();
-        var goal    = Goal.FromRunningDistance(new RunningDistance
+        public GoalServiceTests() => Clean();
+        public void Dispose()     => Clean();
+
+        private static void Clean()
         {
-            Value = 10,
-            Unit  = DistanceUnit.Kilometers
-        });
+            if (Directory.Exists(SaveDir))
+                Directory.Delete(SaveDir, true);
+        }
 
-        // act
-        await service.SaveGoalAsync(goal);
+        private static GoalService MakeSvc() => new(new GoalRepository());
 
-        // assert
-        Assert.True(File.Exists(SavePath),
-            $"Expected goals.json at: {SavePath}");
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // TEST #2 – Round-trip serialize / deserialize
-    // ──────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task SaveThenLoad_ShouldYieldSameRunningGoal()
-    {
-        // arrange
-        var originalDistance = new RunningDistance
+        /* -------- File location ------------------------------------------ */
+        [Fact]
+        public async Task SaveGoalAsync_ShouldCreateFile_InSaveDataFolder()
         {
-            Value = 5,
-            Unit  = DistanceUnit.Miles
-        };
-        var goal     = Goal.FromRunningDistance(originalDistance);
-        var service1 = new GoalService();
+            var svc  = MakeSvc();
+            await svc.SaveGoalAsync(
+                Goal.FromRunningDistance(new RunningDistance { Value = 10, Unit = DistanceUnit.Kilometers }));
 
-        // act
-        var saved   = await service1.SaveGoalAsync(goal);
+            Assert.True(File.Exists(SavePath));
+        }
 
-        var service2 = new GoalService();       // fresh instance
-        await service2.LoadGoalsAsync();
-        var loaded   = await service2.GetActiveGoalByTypeAsync("Running");
+        /* -------- Round-trip --------------------------------------------- */
+        [Fact]
+        public async Task SaveThenLoad_ShouldYieldSameRunningGoal()
+        {
+            var dist = new RunningDistance { Value = 5, Unit = DistanceUnit.Miles };
+            var svc1 = MakeSvc();
+            var saved = await svc1.SaveGoalAsync(Goal.FromRunningDistance(dist));
 
-        // assert
-        Assert.NotNull(loaded);
-        Assert.Equal(saved.Id, loaded.Id);
-        Assert.True(loaded.IsRunningGoal);
+            var svc2 = MakeSvc();
+            await svc2.LoadGoalsAsync();
+            var loaded = await svc2.GetActiveGoalByTypeAsync("Running");
 
-        var dist = loaded.ToRunningDistance();
-        Assert.Equal(originalDistance.Value, dist.Value);
-        Assert.Equal(originalDistance.Unit,  dist.Unit);
-    }
+            Assert.NotNull(loaded);
+            Assert.Equal(saved.Id, loaded!.Id);
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // TEST #3 – Only one active goal per type
-    // ──────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task SavingSecondGoalOfSameType_DeactivatesFirst()
-    {
-        var service = new GoalService();
+            var back = loaded.ToRunningDistance();
+            Assert.Equal(dist.Value, back.Value);
+            Assert.Equal(dist.Unit,  back.Unit);
+        }
 
-        var first  = await service.SaveGoalAsync(
-                        Goal.FromWaterContent(new WaterContent { Value = 8, Unit = WaterUnit.Cups }));
-        var second = await service.SaveGoalAsync(
-                        Goal.FromWaterContent(new WaterContent { Value = 2, Unit = WaterUnit.Liters }));
+        // De-activation rule
+        [Fact]
+        public async Task SavingSecondGoalOfSameType_DeactivatesFirst()
+        {
+            var svc = MakeSvc();
 
-        // act
-        var active = await service.GetActiveGoalByTypeAsync("Water");
+            var first  = await svc.SaveGoalAsync(
+                Goal.FromWaterContent(new WaterContent { Value = 8, Unit = WaterUnit.Cups }));
+            var second = await svc.SaveGoalAsync(
+                Goal.FromWaterContent(new WaterContent { Value = 2, Unit = WaterUnit.Liters }));
 
-        // assert
-        Assert.NotNull(active);
-        Assert.Equal(second.Id, active.Id);
-        Assert.False(first.IsActive);
-        Assert.True(second.IsActive);
-    }
+            // ---- fetch a fresh snapshot ----------------------------------------
+            var all    = await svc.GetAllGoalsAsync();
+            var firstFromRepo  = all.Single(g => g.Id == first.Id);
+            var secondFromRepo = all.Single(g => g.Id == second.Id);
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // TEST #4 – DeleteGoalAsync removes goal and returns true
-    // ──────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task DeleteGoalAsync_ShouldRemoveGoal_AndReturnTrue()
-    {
-        var service = new GoalService();
-        var goal    = await service.SaveGoalAsync(
-                          Goal.FromRunningDistance(new RunningDistance { Value = 3, Unit = DistanceUnit.Kilometers }));
+            Assert.False(firstFromRepo.IsActive);
+            Assert.True (secondFromRepo.IsActive);
 
-        // act
-        var removed = await service.DeleteGoalAsync(goal.Id);
-        var all     = await service.GetAllGoalsAsync();
+            var active = await svc.GetActiveGoalByTypeAsync("Water");
+            Assert.Equal(second.Id, active!.Id);
+        }
 
-        // assert
-        Assert.True(removed);
-        Assert.Empty(all);
-    }
+        /* -------- Delete -------------------------------------------------- */
+        [Fact]
+        public async Task DeleteGoalAsync_ShouldRemoveGoal_AndReturnTrue()
+        {
+            var svc  = MakeSvc();
+            var g    = await svc.SaveGoalAsync(
+                           Goal.FromRunningDistance(new RunningDistance { Value = 3, Unit = DistanceUnit.Kilometers }));
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // TEST #5 – Ids are incremental per save
-    // ──────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task SaveGoalAsync_ShouldAssignIncrementalIds()
-    {
-        var service = new GoalService();
+            var ok   = await svc.DeleteGoalAsync(g.Id);
+            var all  = await svc.GetAllGoalsAsync();
 
-        var g1 = await service.SaveGoalAsync(Goal.FromWaterContent(
-                     new WaterContent { Value = 1, Unit = WaterUnit.Liters }));
-        var g2 = await service.SaveGoalAsync(Goal.FromWaterContent(
-                     new WaterContent { Value = 2, Unit = WaterUnit.Liters }));
+            Assert.True(ok);
+            Assert.Empty(all);
+        }
 
-        Assert.Equal(1, g1.Id);
-        Assert.Equal(2, g2.Id);
+        /* -------- Incremental Ids ---------------------------------------- */
+        [Fact]
+        public async Task SaveGoalAsync_ShouldAssignIncrementalIds()
+        {
+            var svc = MakeSvc();
+            var g1  = await svc.SaveGoalAsync(
+                          Goal.FromWaterContent(new WaterContent { Value = 1, Unit = WaterUnit.Liters }));
+            var g2  = await svc.SaveGoalAsync(
+                          Goal.FromWaterContent(new WaterContent { Value = 2, Unit = WaterUnit.Liters }));
+
+            Assert.Equal(1, g1.Id);
+            Assert.Equal(2, g2.Id);
+        }
     }
 }

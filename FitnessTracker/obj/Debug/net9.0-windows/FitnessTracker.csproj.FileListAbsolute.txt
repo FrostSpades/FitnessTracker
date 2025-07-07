@@ -70,3 +70,7 @@ D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\ref\Fit
 D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\FitnessTracker.sourcelink.json
 D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.DependencyInjection.dll
 D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Logging.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Options.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Primitives.dll

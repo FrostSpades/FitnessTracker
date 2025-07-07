@@ -112,3 +112,7 @@ D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\obj\Debug\net9.0-windows\r
 D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\obj\Debug\net9.0-windows\FitnessTracker.Tests.pdb
 D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\obj\Debug\net9.0-windows\FitnessTracker.Tests.genruntimeconfig.cache
 D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\obj\Debug\net9.0-windows\ref\FitnessTracker.Tests.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\bin\Debug\net9.0-windows\Microsoft.Extensions.Logging.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\bin\Debug\net9.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\bin\Debug\net9.0-windows\Microsoft.Extensions.Options.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker.Tests\bin\Debug\net9.0-windows\Microsoft.Extensions.Primitives.dll

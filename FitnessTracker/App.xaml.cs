@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using FitnessTracker.Repositories;
 using FitnessTracker.Services;
 using FitnessTracker.ViewModels;
 using FitnessTracker.Views;
@@ -31,7 +32,8 @@ namespace FitnessTracker
         private static void ConfigureServices(IServiceCollection services)
         {
             // Services
-            services.AddSingleton<IGoalService, GoalService>();
+            services.AddSingleton<IGoalRepository, GoalRepository>();
+            services.AddSingleton<IGoalService,    GoalService>();
 
             // View-models
             services.AddTransient<SetGoalViewModel>();

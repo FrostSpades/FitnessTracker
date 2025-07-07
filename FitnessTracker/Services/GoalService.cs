@@ -1,120 +1,63 @@
-﻿using System.IO;
-using System.Text.Json;
+﻿// FitnessTracker/Services/GoalService.cs
 using FitnessTracker.Models;
+using FitnessTracker.Repositories;
 
 namespace FitnessTracker.Services;
 
+/// <summary>
+/// Orchestrates goal business rules (single active goal per type, etc.).
+/// Pure persistence lives in <see cref="IGoalRepository"/>.
+/// </summary>
 public interface IGoalService
 {
-    Task<Goal> SaveGoalAsync(Goal goal);
-    Task<List<Goal>> GetAllGoalsAsync();
-    Task<Goal?> GetActiveGoalByTypeAsync(string type);
-    Task<bool> DeleteGoalAsync(int goalId);
     Task LoadGoalsAsync();
+    Task<Goal>  SaveGoalAsync(Goal goal);
+    Task<List<Goal>> GetAllGoalsAsync();
+    Task<Goal?>     GetActiveGoalByTypeAsync(string type);
+    Task<bool>      DeleteGoalAsync(int goalId);
 }
 
-public class GoalService : IGoalService
+public sealed class GoalService : IGoalService, IDisposable
 {
-    private readonly List<Goal> _goals = new();
-    private readonly string _saveDirectory;
-    private readonly string _saveFilePath;
-    private int _nextId = 1;
+    private readonly IGoalRepository _repo;
 
-    public GoalService()
-    {
-        _saveDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FitnessTracker", "SaveData");
-        _saveFilePath = Path.Combine(_saveDirectory, "goals.json");
-        
-        // Ensure directory exists
-        Directory.CreateDirectory(_saveDirectory);
-    }
+    public GoalService(IGoalRepository repo)
+        => _repo = repo ?? throw new ArgumentNullException(nameof(repo));
 
+    /* ---------- Persistence passthroughs --------------------------------- */
+    public Task LoadGoalsAsync()          => _repo.LoadAsync();
+    public Task<List<Goal>> GetAllGoalsAsync() => _repo.GetAllGoalsAsync();
+    public Task<bool> DeleteGoalAsync(int id)  => _repo.DeleteGoalAsync(id);
+
+    /* ---------- Business logic ------------------------------------------- */
     public async Task<Goal> SaveGoalAsync(Goal goal)
     {
-        // Deactivate existing goals of the same type
-        var existingGoals = _goals.Where(g => g.Type == goal.Type).ToList();
-        foreach (var existingGoal in existingGoals)
+        if (goal == null) throw new ArgumentNullException(nameof(goal));
+
+        // 1) De-activate existing active goals of the *same* type
+        var all = await _repo.GetAllGoalsAsync();
+        var modified = false;
+        foreach (var g in all.Where(g => g.Type == goal.Type && g.IsActive))
         {
-            existingGoal.IsActive = false;
+            g.IsActive = false;
+            modified   = true;
         }
+        if (modified)
+            await _repo.SaveAllGoalsAsync(all);   // persist status flips
 
-        // Set ID and add new goal
-        goal.Id = _nextId++;
-        goal.IsActive = true;
-        goal.CreatedAt = DateTime.Now;
-        
-        _goals.Add(goal);
+        // 2) Prepare & persist the new goal
+        goal.IsActive  = true;
+        goal.CreatedAt = DateTime.UtcNow;
 
-        // Save to JSON
-        await SaveToJsonAsync();
-
-        return goal;
-    }
-
-    public async Task<List<Goal>> GetAllGoalsAsync()
-    {
-        return await Task.FromResult(_goals.ToList());
+        return await _repo.AddGoalAsync(goal);
     }
 
     public async Task<Goal?> GetActiveGoalByTypeAsync(string type)
     {
-        return await Task.FromResult(_goals.FirstOrDefault(g => g.Type == type && g.IsActive));
+        if (string.IsNullOrWhiteSpace(type)) return null;
+        var all = await _repo.GetAllGoalsAsync();
+        return all.FirstOrDefault(g => g.Type == type && g.IsActive);
     }
 
-    public async Task<bool> DeleteGoalAsync(int goalId)
-    {
-        var goal = _goals.FirstOrDefault(g => g.Id == goalId);
-        if (goal == null) return false;
-
-        _goals.Remove(goal);
-        await SaveToJsonAsync();
-        return true;
-    }
-
-    public async Task LoadGoalsAsync()
-    {
-        try
-        {
-            if (!File.Exists(_saveFilePath))
-                return;
-
-            var json = await File.ReadAllTextAsync(_saveFilePath);
-            if (string.IsNullOrWhiteSpace(json))
-                return;
-
-            var goals = JsonSerializer.Deserialize<List<Goal>>(json);
-            if (goals != null)
-            {
-                _goals.Clear();
-                _goals.AddRange(goals);
-                
-                // Update next ID
-                _nextId = _goals.Any() ? _goals.Max(g => g.Id) + 1 : 1;
-            }
-        }
-        catch (Exception ex)
-        {
-            // Log error or handle as appropriate for your app
-            System.Diagnostics.Debug.WriteLine($"Error loading goals: {ex.Message}");
-        }
-    }
-
-    private async Task SaveToJsonAsync()
-    {
-        try
-        {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
-            
-            var json = JsonSerializer.Serialize(_goals, options);
-            await File.WriteAllTextAsync(_saveFilePath, json);
-        }
-        catch (Exception ex)
-        {
-            // Log error or handle as appropriate for your app
-            System.Diagnostics.Debug.WriteLine($"Error saving goals: {ex.Message}");
-        }
-    }
+    public void Dispose() => (_repo as IDisposable)?.Dispose();
 }
