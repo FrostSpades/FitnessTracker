@@ -14,7 +14,7 @@
                 Height="40" 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center"
-                Click="SetGoalButton_Click"
+                Command="{Binding SetGoalCommand}"
                 FontSize="14"
                 Background="#4CAF50"
                 Foreground="White"

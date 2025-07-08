@@ -34,11 +34,11 @@ namespace FitnessTracker
             // Services
             services.AddSingleton<IGoalRepository, GoalRepository>();
             services.AddSingleton<IGoalService,    GoalService>();
+            services.AddSingleton<IWindowService, WindowService>();
 
             // View-models
             services.AddTransient<SetGoalViewModel>();
             services.AddTransient<HomeViewModel>();
-            services.AddTransient<FitnessViewModel>();
             services.AddTransient<MainViewModel>();
 
             // Views

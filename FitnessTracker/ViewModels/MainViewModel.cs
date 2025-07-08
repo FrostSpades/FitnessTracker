@@ -24,9 +24,6 @@ namespace FitnessTracker.ViewModels
             private set => SetField(ref _currentViewModel, value);
         }
 
-        // Exposed sub-VM (e.g., bound directly in XAML)
-        public FitnessViewModel Fitness { get; }
-
         // Keep references so they aren’t GC’d away
         private readonly SetGoalViewModel _setGoalVM;
         private readonly HomeViewModel    _homeVM;
@@ -35,12 +32,10 @@ namespace FitnessTracker.ViewModels
         /// All dependencies arrive via constructor injection.
         /// </summary>
         public MainViewModel(HomeViewModel    homeVM,
-                             SetGoalViewModel setGoalVM,
-                             FitnessViewModel fitnessVM)
+                             SetGoalViewModel setGoalVM)
         {
             _homeVM     = homeVM;
             _setGoalVM  = setGoalVM;
-            Fitness     = fitnessVM;
 
             CurrentViewModel = _homeVM;
 
@@ -48,7 +43,6 @@ namespace FitnessTracker.ViewModels
             ShowHome    = new RelayCommand(() => SwitchTo(_homeVM));
         }
 
-        #region ░░ Helpers ░░
         private void SwitchTo(INotifyPropertyChanged vm)
         {
             CurrentViewModel = vm;
@@ -65,6 +59,5 @@ namespace FitnessTracker.ViewModels
             OnPropertyChanged(name);
             return true;
         }
-        #endregion
     }
 }
