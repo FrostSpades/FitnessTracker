@@ -13,11 +13,18 @@ public class HomeViewModel : INotifyPropertyChanged
     private readonly IWindowService _windowService;
     
     public ICommand SetGoalCommand { get; }
+    public ICommand EnterProgressCommand { get; }
     
     public HomeViewModel(IWindowService windowService)
     {
         _windowService = windowService;
         SetGoalCommand = new RelayCommand(ExecuteSetGoal);
+        EnterProgressCommand = new RelayCommand(ExecuteEnterProgress);
+    }
+    
+    private void ExecuteEnterProgress()
+    {
+        _windowService.ShowEnterProgressDialog();
     }
     
     private void ExecuteSetGoal()

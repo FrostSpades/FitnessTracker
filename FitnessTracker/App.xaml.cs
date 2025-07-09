@@ -35,16 +35,20 @@ namespace FitnessTracker
             services.AddSingleton<IGoalRepository, GoalRepository>();
             services.AddSingleton<IGoalService,    GoalService>();
             services.AddSingleton<IWindowService, WindowService>();
+            services.AddSingleton<IProgressService, ProgressService>();
+            services.AddSingleton<IProgressRepository, ProgressRepository>();
 
             // View-models
             services.AddTransient<SetGoalViewModel>();
             services.AddTransient<HomeViewModel>();
             services.AddTransient<MainViewModel>();
+            services.AddTransient<EnterProgressViewModel>();
 
             // Views
             services.AddTransient<SetGoal>();
             services.AddTransient<Home>();
-            services.AddSingleton<MainWindow>(); 
+            services.AddSingleton<MainWindow>();
+            services.AddTransient<EnterProgress>();
         }
     }
 }

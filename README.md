@@ -23,3 +23,5 @@ To run the tests, run:
 ```bash
 dotnet test
 ```
+
+**IMPORTANT NOTE:** When checking for created files (i.e. the `SaveData/` folder), the application root is at `FitnessTracker/bin/Debug/net9.0-windows/`, so the folder will be located at `FitnessTracker/bin/Debug/net9.0-windows/SaveData`.

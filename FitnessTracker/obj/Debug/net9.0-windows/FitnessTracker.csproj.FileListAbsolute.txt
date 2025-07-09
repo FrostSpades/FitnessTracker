@@ -74,3 +74,5 @@ D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microso
 D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
 D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Options.dll
 D:\Documents\Work\FitnessTracker\FitnessTracker\bin\Debug\net9.0-windows\Microsoft.Extensions.Primitives.dll
+D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\Views\EnterProgress.baml
+D:\Documents\Work\FitnessTracker\FitnessTracker\obj\Debug\net9.0-windows\Views\EnterProgress.g.cs

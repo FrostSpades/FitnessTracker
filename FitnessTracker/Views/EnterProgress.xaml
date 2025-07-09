@@ -1,0 +1,121 @@
+﻿<!-- FitnessTracker/Views/EnterProgress.xaml -->
+<UserControl x:Class="FitnessTracker.Views.EnterProgress"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/shared"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="300">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <mah:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0" Text="Enter Progress" 
+                   FontSize="18" FontWeight="Bold" 
+                   HorizontalAlignment="Center" 
+                   Margin="0,0,0,20"/>
+
+
+        <!-- Progress Type Selection -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+            <TextBlock Text="Progress Type:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <ComboBox ItemsSource="{Binding ProgressTypes}"
+                      SelectedItem="{Binding SelectedProgressType}"
+                      Height="30"/>
+        </StackPanel>
+
+
+        <!-- Progress Value -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,15">
+            <TextBlock Text="Value:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <TextBox Text="{Binding ProgressValue, UpdateSourceTrigger=PropertyChanged}"
+                     Height="30" VerticalContentAlignment="Center"/>
+        </StackPanel>
+
+
+        <!-- Distance Unit (Running only) -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,15"
+                    Visibility="{Binding IsRunningProgress, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="Distance Unit:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <ComboBox ItemsSource="{Binding DistanceUnits}"
+                      SelectedItem="{Binding SelectedDistanceUnit}"
+                      Height="30"/>
+        </StackPanel>
+
+
+        <!-- Water Unit (Water only) -->
+        <StackPanel Grid.Row="4" Margin="0,0,0,15"
+                    Visibility="{Binding IsWaterProgress, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="Water Unit:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <ComboBox ItemsSource="{Binding WaterUnits}"
+                      SelectedItem="{Binding SelectedWaterUnit}"
+                      Height="30"/>
+        </StackPanel>
+
+
+        <!-- Notes -->
+        <StackPanel Grid.Row="5" Margin="0,0,0,15">
+            <TextBlock Text="Notes (Optional):" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                     Height="60" TextWrapping="Wrap" 
+                     AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                     VerticalContentAlignment="Top"/>
+        </StackPanel>
+
+
+        <!-- Validation Error -->
+        <TextBlock Grid.Row="6" Text="{Binding ValidationError}"
+                   Foreground="Red" FontWeight="SemiBold"
+                   Visibility="{Binding ValidationError, Converter={StaticResource StringToVisibilityConverter}}"
+                   TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+
+        <!-- Save Button -->
+        <Button Grid.Row="8" Content="Save Progress"
+                Height="35" FontSize="14" FontWeight="SemiBold"
+                Background="#4CAF50" Foreground="White"
+                BorderThickness="0" Cursor="Hand"
+                IsEnabled="{Binding IsValid}"
+                Click="SaveButton_Click">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#45a049"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="#cccccc"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+
+
+        <!-- Loading Indicator -->
+        <StackPanel Grid.Row="8" Orientation="Horizontal" 
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Visibility="{Binding IsSaving, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ProgressBar IsIndeterminate="True" Width="100" Height="20" Margin="0,0,10,0"/>
+            <TextBlock Text="Saving..." VerticalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

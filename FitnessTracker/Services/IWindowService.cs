@@ -5,4 +5,5 @@ namespace FitnessTracker.Services;
 public interface IWindowService
 {
     void ShowSetGoalDialog();
+    void ShowEnterProgressDialog();
 }

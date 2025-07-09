@@ -33,4 +33,21 @@ public class WindowService : IWindowService
 
         setGoalWindow.ShowDialog();
     }
+    
+    public void ShowEnterProgressDialog()
+    {
+        var enterProgressWindow = new Window
+        {
+            Title = "Enter Progress",
+            Content = _serviceProvider.GetRequiredService<EnterProgress>(),
+            Width = 350,
+            Height = 500,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = Application.Current.MainWindow,
+            ResizeMode = ResizeMode.NoResize,
+            WindowStyle = WindowStyle.ToolWindow
+        };
+
+        enterProgressWindow.ShowDialog();
+    }
 }
