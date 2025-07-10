@@ -3,41 +3,53 @@ using FitnessTracker.Models;
 using FitnessTracker.Repositories;
 using Microsoft.Extensions.Logging;
 
-namespace FitnessTracker.Services;
-
-public class ProgressService : IProgressService
+namespace FitnessTracker.Services
 {
-    private readonly IProgressRepository _repository;
-    private readonly ILogger<ProgressService>? _logger;
-
-    public ProgressService(IProgressRepository repository, ILogger<ProgressService>? logger = null)
+    public interface IProgressService
     {
-        _repository = repository;
-        _logger     = logger;
+        Task<ProgressEntry> SaveProgressAsync(GoalType type, float value, DistanceUnit distanceUnit, WaterUnit waterUnit, string? notes);
+        Task<IEnumerable<ProgressEntry>> GetProgressHistoryAsync(string goalType);
+        Task<ProgressEntry?> GetLatestProgressAsync(string goalType);
     }
 
-    public async Task<ProgressEntry> SaveProgressAsync(ProgressEntry progress)
+    public class ProgressService : IProgressService
     {
-        if (progress is null) throw new ArgumentNullException(nameof(progress));
+        private readonly IProgressRepository _repository;
+        private readonly ILogger<ProgressService>? _logger;
 
-        progress.Id        = Guid.NewGuid();
-        progress.Timestamp = DateTime.UtcNow;
+        public ProgressService(IProgressRepository repository, ILogger<ProgressService>? logger = null)
+        {
+            _repository = repository;
+            _logger = logger;
+        }
 
-        // repository now returns a cached list, so this is cheap
-        var entries = await _repository.LoadAsync(progress.GoalType);
-        entries.Add(progress);
-        await _repository.SaveAsync(progress.GoalType, entries);
+        public async Task<ProgressEntry> SaveProgressAsync(GoalType type, float value, DistanceUnit distanceUnit, WaterUnit waterUnit, string? notes)
+        {
+            if (value <= 0 || float.IsNaN(value) || float.IsInfinity(value))
+                throw new ArgumentException(nameof(value));
 
-        _logger?.LogInformation("Saved progress entry: {GoalType} - {Value}", progress.GoalType, progress.Value);
-        return progress;
+            ProgressEntry progress = type switch
+            {
+                GoalType.Running => ProgressEntry.FromRunningDistance(new RunningDistance { Unit = distanceUnit, Value = value }, notes),
+                GoalType.Water => ProgressEntry.FromWaterContent(new WaterContent { Unit = waterUnit, Value = value }, notes),
+                _ => throw new ArgumentException(nameof(type))
+            };
+
+            var entries = await _repository.LoadAsync(type.ToString());
+            entries.Add(progress);
+            await _repository.SaveAsync(type.ToString(), entries);
+
+            _logger?.LogInformation("Saved progress entry: {GoalType} - {Value}", type, value);
+            return progress;
+        }
+
+        public async Task<IEnumerable<ProgressEntry>> GetProgressHistoryAsync(string goalType)
+        {
+            var entries = await _repository.LoadAsync(goalType);
+            return entries.OrderByDescending(e => e.Timestamp);
+        }
+
+        public async Task<ProgressEntry?> GetLatestProgressAsync(string goalType) =>
+            (await GetProgressHistoryAsync(goalType)).FirstOrDefault();
     }
-
-    public async Task<IEnumerable<ProgressEntry>> GetProgressHistoryAsync(string goalType)
-    {
-        var entries = await _repository.LoadAsync(goalType);
-        return entries.OrderByDescending(e => e.Timestamp);
-    }
-
-    public async Task<ProgressEntry?> GetLatestProgressAsync(string goalType) =>
-        (await GetProgressHistoryAsync(goalType)).FirstOrDefault();
 }

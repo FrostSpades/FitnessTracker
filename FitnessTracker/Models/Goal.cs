@@ -9,7 +9,7 @@ public class Goal
     public int Id { get; set; }
 
     [Required]
-    public string Type { get; set; } = string.Empty;
+    public GoalType Type { get; set; } = GoalType.Running;
 
     [Range(0.01, float.MaxValue, ErrorMessage = "Value must be greater than 0")]
     public float Value { get; set; }
@@ -18,10 +18,12 @@ public class Goal
     public string Unit { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public bool IsActive { get; set; } = true;
+    
+    [JsonInclude]                 
+    public bool IsActive { get; private set; }
 
-    [JsonIgnore] public bool IsRunningGoal => Type == "Running";
-    [JsonIgnore] public bool IsWaterGoal   => Type == "Water";
+    [JsonIgnore] public bool IsRunningGoal => Type == GoalType.Running;
+    [JsonIgnore] public bool IsWaterGoal   => Type == GoalType.Water;
 
     public RunningDistance ToRunningDistance()
     {
@@ -48,7 +50,7 @@ public class Goal
 
         return new Goal
         {
-            Type = "Running",
+            Type = GoalType.Running,
             Value = running.Value,
             Unit  = running.Unit.ToString()
         };
@@ -61,11 +63,19 @@ public class Goal
 
         return new Goal
         {
-            Type = "Water",
+            Type = GoalType.Water,
             Value = water.Value,
             Unit  = water.Unit.ToString()
         };
     }
+
+    public void MarkAsActive()
+    {
+        IsActive  = true;
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    public void Deactivate() => IsActive = false;
 
     /* --- Deep-copy helper ------------------------------------------- */
     public Goal Clone() => new()

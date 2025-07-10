@@ -48,7 +48,7 @@ namespace FitnessTracker.Tests
 
             var svc2 = MakeSvc();
             await svc2.LoadGoalsAsync();
-            var loaded = await svc2.GetActiveGoalByTypeAsync("Running");
+            var loaded = await svc2.GetActiveGoalByTypeAsync(GoalType.Running);
 
             Assert.NotNull(loaded);
             Assert.Equal(saved.Id, loaded!.Id);
@@ -77,7 +77,7 @@ namespace FitnessTracker.Tests
             Assert.False(firstFromRepo.IsActive);
             Assert.True (secondFromRepo.IsActive);
 
-            var active = await svc.GetActiveGoalByTypeAsync("Water");
+            var active = await svc.GetActiveGoalByTypeAsync(GoalType.Water);
             Assert.Equal(second.Id, active!.Id);
         }
 

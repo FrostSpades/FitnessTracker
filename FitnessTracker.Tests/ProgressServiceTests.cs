@@ -32,13 +32,7 @@ namespace FitnessTracker.Tests
         public async Task SaveProgressAsync_ShouldCreateFile()
         {
             var svc = MakeSvc();
-            var entry = new ProgressEntry
-            {
-                GoalType = "Running",
-                Value = 5f
-            };
-
-            await svc.SaveProgressAsync(entry);
+            await svc.SaveProgressAsync(GoalType.Running, 5f, DistanceUnit.Miles, WaterUnit.Ounces, null);
 
             Assert.True(File.Exists(GetFilePath("Running")));
         }
@@ -47,13 +41,8 @@ namespace FitnessTracker.Tests
         public async Task SaveProgressAsync_ShouldAssignIdAndTimestamp()
         {
             var svc = MakeSvc();
-            var entry = new ProgressEntry
-            {
-                GoalType = "Water",
-                Value = 2f
-            };
 
-            var result = await svc.SaveProgressAsync(entry);
+            var result = await svc.SaveProgressAsync(GoalType.Water, 2f, DistanceUnit.Miles, WaterUnit.Ounces, null);
 
             Assert.NotEqual(Guid.Empty, result.Id);
             Assert.True(result.Timestamp > DateTime.MinValue);
@@ -65,9 +54,9 @@ namespace FitnessTracker.Tests
             var svc = MakeSvc();
             var type = "Running";
 
-            await svc.SaveProgressAsync(new ProgressEntry { GoalType = type, Value = 1 });
+            await svc.SaveProgressAsync(GoalType.Running, 1f, DistanceUnit.Miles, WaterUnit.Ounces, null);
             await Task.Delay(10);
-            await svc.SaveProgressAsync(new ProgressEntry { GoalType = type, Value = 2 });
+            await svc.SaveProgressAsync(GoalType.Running, 2f, DistanceUnit.Miles, WaterUnit.Ounces, null);
 
             var history = (await svc.GetProgressHistoryAsync(type)).ToList();
 
@@ -91,9 +80,9 @@ namespace FitnessTracker.Tests
             var svc = MakeSvc();
             var type = "Water";
 
-            var older = await svc.SaveProgressAsync(new ProgressEntry { GoalType = type, Value = 1 });
+            var older = await svc.SaveProgressAsync(GoalType.Water, 1f, DistanceUnit.Miles, WaterUnit.Ounces, null);
             await Task.Delay(10);
-            var newer = await svc.SaveProgressAsync(new ProgressEntry { GoalType = type, Value = 2 });
+            var newer = await svc.SaveProgressAsync(GoalType.Water, 2f, DistanceUnit.Miles, WaterUnit.Ounces, null);
 
             var latest = await svc.GetLatestProgressAsync(type);
 
