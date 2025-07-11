@@ -1,118 +1,57 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using FitnessTracker.Models;
 using FitnessTracker.Repositories;
+using FitnessTracker.Tests.Utils;
 using Xunit;
 
-namespace FitnessTracker.Tests
+namespace FitnessTracker.Tests;
+
+public sealed class GoalRepositoryTests
 {
-    public sealed class GoalRepositoryTests : IDisposable
+    [Fact]
+    public async Task AddGoalAsync_ShouldStoreGoalInDatabase()
     {
-        private static readonly string SaveDir  = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SaveData");
-        private static readonly string SavePath = Path.Combine(SaveDir, "goals.json");
+        using var db = DbContextFactory.CreateInMemoryDbContext();
+        var repo = new GoalRepository(db);
 
-        public GoalRepositoryTests() => Clean();
-        public void Dispose()        => Clean();
+        var added = await repo.AddGoalAsync(
+            Goal.FromRunningDistance(new RunningDistance { Value = 5, Unit = DistanceUnit.Kilometers }));
 
-        private static void Clean()
-        {
-            if (Directory.Exists(SaveDir))
-                Directory.Delete(SaveDir, true);
-        }
+        var stored = await repo.GetGoalAsync(added.Id);
 
-        /* -------- File is created ---------------------------------------- */
-        [Fact]
-        public async Task AddGoalAsync_ShouldCreateGoalsJsonFile()
-        {
-            var repo = new GoalRepository();
-            await repo.AddGoalAsync(
-                Goal.FromRunningDistance(new RunningDistance { Value = 1, Unit = DistanceUnit.Kilometers }));
+        Assert.NotNull(stored);
+        Assert.Equal(added.Id, stored!.Id);
+        Assert.Equal(5, stored.Value);
+    }
 
-            Assert.True(File.Exists(SavePath));
-        }
+    [Fact]
+    public async Task DeleteGoalAsync_ShouldRemoveGoal()
+    {
+        using var db = DbContextFactory.CreateInMemoryDbContext();
+        var repo = new GoalRepository(db);
 
-        /* -------- Round-trip --------------------------------------------- */
-        [Fact]
-        public async Task SaveThenLoad_ShouldRoundTripGoal()
-        {
-            var original = Goal.FromWaterContent(
-                               new WaterContent { Value = 8, Unit = WaterUnit.Ounces });
+        var g = await repo.AddGoalAsync(Goal.FromWaterContent(new WaterContent { Value = 3, Unit = WaterUnit.Liters }));
+        var ok = await repo.DeleteGoalAsync(g.Id);
 
-            var repo1 = new GoalRepository();
-            var saved = await repo1.AddGoalAsync(original);
+        var all = await repo.GetAllGoalsAsync();
 
-            var repo2 = new GoalRepository();
-            await repo2.LoadAsync();
-            var all   = await repo2.GetAllGoalsAsync();
-            var loaded = all.Single();
+        Assert.True(ok);
+        Assert.Empty(all);
+    }
 
-            Assert.Equal(saved.Id, loaded.Id);
-            Assert.Equal(original.Value, loaded.Value);
-            Assert.Equal(original.Unit,  loaded.Unit);
-        }
+    [Fact]
+    public async Task GetGoalsByTypeAsync_ShouldFilterCorrectly()
+    {
+        using var db = DbContextFactory.CreateInMemoryDbContext();
+        var repo = new GoalRepository(db);
 
-        /* -------- Delete -------------------------------------------------- */
-        [Fact]
-        public async Task DeleteGoalAsync_ShouldRemoveGoal()
-        {
-            var repo = new GoalRepository();
-            var g    = await repo.AddGoalAsync(
-                           Goal.FromRunningDistance(new RunningDistance { Value = 2, Unit = DistanceUnit.Miles }));
+        await repo.AddGoalAsync(Goal.FromRunningDistance(new RunningDistance { Value = 2, Unit = DistanceUnit.Miles }));
+        await repo.AddGoalAsync(Goal.FromWaterContent(new WaterContent { Value = 8, Unit = WaterUnit.Cups }));
 
-            var ok  = await repo.DeleteGoalAsync(g.Id);
-            var all = await repo.GetAllGoalsAsync();
+        var water = await repo.GetGoalsByTypeAsync(GoalType.Water);
 
-            Assert.True(ok);
-            Assert.Empty(all);
-        }
-
-        /* -------- Incremental IDs across restarts ------------------------ */
-        [Fact]
-        public async Task AddGoalAsync_ShouldIncrementIdsAcrossReloads()
-        {
-            var r1 = new GoalRepository();
-            var g1 = await r1.AddGoalAsync(
-                         Goal.FromWaterContent(new WaterContent { Value = 1, Unit = WaterUnit.Liters }));
-            await r1.AddGoalAsync(
-                Goal.FromWaterContent(new WaterContent { Value = 2, Unit = WaterUnit.Liters }));
-
-            var r2 = new GoalRepository();
-            await r2.LoadAsync();
-            var g3 = await r2.AddGoalAsync(
-                         Goal.FromWaterContent(new WaterContent { Value = 3, Unit = WaterUnit.Liters }));
-
-            Assert.Equal(1, g1.Id);
-            Assert.Equal(3, g3.Id);
-        }
-
-        /* -------- No stray *.tmp files ----------------------------------- */
-        [Fact]
-        public async Task PersistAsync_ShouldNotLeaveTempFiles()
-        {
-            var repo = new GoalRepository();
-            await repo.AddGoalAsync(
-                Goal.FromRunningDistance(new RunningDistance { Value = 7, Unit = DistanceUnit.Kilometers }));
-
-            var hasTmp = Directory.EnumerateFiles(SaveDir, "*.tmp").Any();
-            Assert.False(hasTmp);
-        }
-
-        /* -------- Thread-safety smoke test ------------------------------- */
-        [Fact]
-        public async Task AddGoalAsync_ShouldBeThreadSafe()
-        {
-            var repo = new GoalRepository();
-            var tasks = Enumerable.Range(0, 10).Select(i =>
-                repo.AddGoalAsync(
-                    Goal.FromWaterContent(new WaterContent { Value = i + 1, Unit = WaterUnit.Liters })));
-
-            await Task.WhenAll(tasks);
-
-            var all = await repo.GetAllGoalsAsync();
-            Assert.Equal(10, all.Count);
-            Assert.Equal(10, all.Select(g => g.Id).Distinct().Count());
-        }
+        Assert.Single(water);
+        Assert.Equal(GoalType.Water, water[0].Type);
     }
 }

@@ -24,4 +24,5 @@ To run the tests, run:
 dotnet test
 ```
 
-**IMPORTANT NOTE:** The application (not project) root is at `FitnessTracker/bin/Debug/net9.0-windows/`.
+**IMPORTANT NOTES:** 
+- The application (not project) root is at `FitnessTracker/bin/Debug/net9.0-windows/`.
